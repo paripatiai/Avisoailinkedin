@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Brand {
+  id               String   @id @default(cuid())
+  instagramHandle  String   @unique
+  email            String?
+  credits          Int      @default(3)
+  brandName        String?
+  niche            String?
+  description      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  recommendations    Recommendation[]
+  roiAnalyses        RoiAnalysis[]
+  creditTransactions CreditTransaction[]
+  searchQueries      SearchQuery[]
+}
+
+model Influencer {
+  id               String   @id @default(cuid())
+  instagramHandle  String   @unique
+  name             String
+  niche            String
+  subNiche         String?
+  followerCount    Int
+  followingCount   Int?
+  engagementRate   Float
+  avgLikes         Int?
+  avgComments      Int?
+  avgShares        Int?
+  avgROI           Float?
+  roiDataPoints    Int      @default(0)
+  bio              String?
+  profilePicUrl    String?
+  location         String?
+  audienceAgeRange String?
+  audienceGender   String?
+  audienceLocation String?
+  contentTypes     String?
+  pastBrands       String?
+  tags             String?
+  priceRange       String?
+  isVerified       Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  recommendations Recommendation[]
+  roiAnalyses     RoiAnalysis[]
+}
+
+model Recommendation {
+  id           String   @id @default(cuid())
+  brandId      String
+  influencerId String
+  wasFree      Boolean  @default(false)
+  creditsUsed  Int      @default(0)
+  matchScore   Float?
+  matchReason  String?
+  shownAt      DateTime @default(now())
+
+  brand      Brand      @relation(fields: [brandId], references: [id])
+  influencer Influencer @relation(fields: [influencerId], references: [id])
+
+  @@index([brandId, influencerId])
+}
+
+model RoiAnalysis {
+  id              String   @id @default(cuid())
+  brandId         String
+  influencerId    String?
+  postUrl         String
+  amountPaid      Float
+  platform        String   @default("instagram")
+  postType        String?
+  reach           Int?
+  impressions     Int?
+  likes           Int?
+  comments        Int?
+  saves           Int?
+  shares          Int?
+  engagementRate  Float?
+  estimatedReach  Int?
+  roiScore        Float?
+  costPerLike     Float?
+  costPerComment  Float?
+  costPerThousand Float?
+  reportData      String?
+  creditsUsed     Int      @default(2)
+  createdAt       DateTime @default(now())
+
+  brand      Brand       @relation(fields: [brandId], references: [id])
+  influencer Influencer? @relation(fields: [influencerId], references: [id])
+}
+
+model CreditTransaction {
+  id              String   @id @default(cuid())
+  brandId         String
+  credits         Int
+  amountUsd       Float?
+  stripePaymentId String?
+  type            String
+  description     String?
+  createdAt       DateTime @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id])
+}
+
+model SearchQuery {
+  id              String   @id @default(cuid())
+  brandId         String
+  queryText       String
+  resultsJson     String?
+  influencerCount Int      @default(0)
+  creditsUsed     Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  brand Brand @relation(fields: [brandId], references: [id])
+}
