@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
-const dbUrl = process.env.DATABASE_URL || "file:./prisma/dev.db";
-const authToken = process.env.DATABASE_AUTH_TOKEN;
-const adapter = new PrismaLibSql({ url: dbUrl, ...(authToken ? { authToken } : {}) });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const influencers = [

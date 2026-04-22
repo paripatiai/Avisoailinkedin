@@ -1,15 +1,11 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 function createPrismaClient() {
-  const dbUrl = process.env.DATABASE_URL || "file:./prisma/dev.db";
-  const authToken = process.env.DATABASE_AUTH_TOKEN;
-
-  const adapter = new PrismaLibSql({
-    url: dbUrl,
-    ...(authToken ? { authToken } : {}),
-  });
-
+  const connectionString = process.env.DATABASE_URL!;
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
 
