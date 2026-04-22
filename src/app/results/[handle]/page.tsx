@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   AtSign, Lock, Zap, Users, TrendingUp, Star, ChevronRight,
@@ -19,6 +19,9 @@ interface ResultsData {
 
 export default function ResultsPage() {
   const { handle } = useParams<{ handle: string }>();
+  const searchParams = useSearchParams();
+  const sell = searchParams.get("sell") ?? undefined;
+  const customer = searchParams.get("customer") ?? undefined;
   const [data, setData] = useState<ResultsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,7 +38,7 @@ export default function ResultsPage() {
       const res = await fetch("/api/analyze-brand", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ handle: decodeURIComponent(handle) }),
+        body: JSON.stringify({ handle: decodeURIComponent(handle), sell, customer }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed to analyze brand");
@@ -46,7 +49,7 @@ export default function ResultsPage() {
     } finally {
       setLoading(false);
     }
-  }, [handle]);
+  }, [handle, sell, customer]);
 
   useEffect(() => {
     fetchResults();

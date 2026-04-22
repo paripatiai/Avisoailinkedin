@@ -5,14 +5,29 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-export async function analyzeBrand(instagramHandle: string): Promise<BrandAnalysis> {
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `You are an expert brand analyst. Based on the Instagram handle "@${instagramHandle}", infer what kind of D2C (direct-to-consumer) brand this likely is.
+export async function analyzeBrand(instagramHandle: string, sell?: string, customer?: string): Promise<BrandAnalysis> {
+  const hasContext = sell && sell.trim().length > 0;
+
+  const prompt = hasContext
+    ? `You are an expert brand analyst. Analyze this D2C (direct-to-consumer) brand for influencer matching.
+
+BRAND INFO:
+- Instagram handle: @${instagramHandle}
+- What they sell: ${sell}
+- Target customer: ${customer || "not specified"}
+
+Based on this information, build a detailed brand profile.
+
+Respond ONLY with a valid JSON object (no markdown, no explanation):
+{
+  "handle": "${instagramHandle}",
+  "inferredNiche": "string - primary niche category",
+  "inferredProducts": ["array", "of", "specific", "products"],
+  "targetAudience": "string - detailed description of target customer",
+  "brandVoice": "string - likely brand personality/voice",
+  "pricePoint": "budget|mid-range|premium|luxury"
+}`
+    : `You are an expert brand analyst. Based on the Instagram handle "@${instagramHandle}", infer what kind of D2C (direct-to-consumer) brand this likely is.
 
 Analyze the handle name itself for clues about:
 - The niche/category (beauty, fitness, food, fashion, home goods, wellness, pets, baby, etc.)
@@ -29,9 +44,12 @@ Respond ONLY with a valid JSON object (no markdown, no explanation):
   "targetAudience": "string - description of target customer",
   "brandVoice": "string - likely brand personality/voice",
   "pricePoint": "budget|mid-range|premium|luxury"
-}`,
-      },
-    ],
+}`;
+
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1024,
+    messages: [{ role: "user", content: prompt }],
   });
 
   const text = message.content[0].type === "text" ? message.content[0].text : "";

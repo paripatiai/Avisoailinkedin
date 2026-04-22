@@ -2,19 +2,34 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AtSign, Zap, BarChart3, Target, ChevronRight, Star, TrendingUp, Shield } from "lucide-react";
+import { AtSign, Zap, BarChart3, Target, ChevronRight, Star, TrendingUp, Shield, ArrowRight } from "lucide-react";
+
+type Step = "handle" | "context";
 
 export default function HomePage() {
+  const [step, setStep] = useState<Step>("handle");
   const [handle, setHandle] = useState("");
+  const [whatYouSell, setWhatYouSell] = useState("");
+  const [targetCustomer, setTargetCustomer] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleHandleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!handle.trim()) return;
+    setStep("context");
+  };
+
+  const handleContextSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!whatYouSell.trim()) return;
     setLoading(true);
     const cleanHandle = handle.replace(/^@/, "").trim();
-    router.push(`/results/${encodeURIComponent(cleanHandle)}`);
+    const params = new URLSearchParams({
+      sell: whatYouSell.trim(),
+      customer: targetCustomer.trim(),
+    });
+    router.push(`/results/${encodeURIComponent(cleanHandle)}?${params.toString()}`);
   };
 
   return (
@@ -52,33 +67,96 @@ export default function HomePage() {
           <strong className="text-white/80">top 3 matching influencers</strong> — for free. No sign-up needed.
         </p>
 
-        <form onSubmit={handleSubmit} className="w-full max-w-lg">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 flex items-center gap-3 glass-card rounded-xl px-4 py-3.5 glow-purple">
-              <AtSign className="w-5 h-5 text-violet-400 shrink-0" />
-              <input
-                type="text"
-                value={handle}
-                onChange={(e) => setHandle(e.target.value)}
-                placeholder="yourbrand or @yourbrand"
-                className="flex-1 bg-transparent text-white placeholder-white/30 outline-none text-lg"
-                disabled={loading}
-              />
+        {/* Step 1: Handle */}
+        {step === "handle" && (
+          <form onSubmit={handleHandleSubmit} className="w-full max-w-lg">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 flex items-center gap-3 glass-card rounded-xl px-4 py-3.5 glow-purple">
+                <AtSign className="w-5 h-5 text-violet-400 shrink-0" />
+                <input
+                  type="text"
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value)}
+                  placeholder="yourbrand or @yourbrand"
+                  className="flex-1 bg-transparent text-white placeholder-white/30 outline-none text-lg"
+                  autoFocus
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!handle.trim()}
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-500 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-3.5 rounded-xl transition-all duration-200 whitespace-nowrap"
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-            <button
-              type="submit"
-              disabled={loading || !handle.trim()}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-500 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-3.5 rounded-xl transition-all duration-200 whitespace-nowrap"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>Find Influencers<ChevronRight className="w-4 h-4" /></>
-              )}
-            </button>
-          </div>
-          <p className="mt-3 text-white/40 text-sm">Top 3 influencers revealed instantly · No credit card needed</p>
-        </form>
+            <p className="mt-3 text-white/40 text-sm">Top 3 influencers revealed instantly · No credit card needed</p>
+          </form>
+        )}
+
+        {/* Step 2: Brand context (2 quick questions) */}
+        {step === "context" && (
+          <form onSubmit={handleContextSubmit} className="w-full max-w-lg">
+            <div className="glass-card rounded-2xl p-6 text-left mb-4">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-6 h-6 rounded-full bg-violet-500 flex items-center justify-center text-xs font-bold text-white">@</div>
+                <span className="text-white/70 text-sm">Matching influencers for</span>
+                <span className="font-bold text-violet-300">@{handle.replace(/^@/, "")}</span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-white/80 mb-2">
+                    What does your brand sell? <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={whatYouSell}
+                    onChange={(e) => setWhatYouSell(e.target.value)}
+                    placeholder="e.g. vegan protein powder, baby clothing, natural skincare, pet treats"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 outline-none focus:border-violet-500/50 transition-colors text-sm"
+                    autoFocus
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-white/80 mb-2">
+                    Who is your target customer? <span className="text-white/30">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={targetCustomer}
+                    onChange={(e) => setTargetCustomer(e.target.value)}
+                    placeholder="e.g. fitness-focused women aged 25-35, new moms, dog owners, health-conscious millennials"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 outline-none focus:border-violet-500/50 transition-colors text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep("handle")}
+                className="px-4 py-3 glass-card hover:bg-white/10 text-white/50 hover:text-white rounded-xl text-sm transition-all"
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                disabled={loading || !whatYouSell.trim()}
+                className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-blue-500 hover:from-violet-500 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all duration-200"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>Find My Influencers <ArrowRight className="w-4 h-4" /></>
+                )}
+              </button>
+            </div>
+            <p className="mt-3 text-white/40 text-sm text-center">Top 3 shown instantly · No credit card needed</p>
+          </form>
+        )}
 
         <div className="flex flex-wrap items-center justify-center gap-8 mt-16 text-white/50 text-sm">
           <div className="flex items-center gap-2">
@@ -110,8 +188,8 @@ export default function HomePage() {
               {
                 step: "01",
                 icon: <AtSign className="w-6 h-6" />,
-                title: "Enter your Instagram handle",
-                desc: "Our AI analyzes your brand niche, products, and target audience. No API keys, no setup.",
+                title: "Describe your brand",
+                desc: "Enter your handle and tell us what you sell and who your customer is. Takes 20 seconds.",
                 color: "violet",
               },
               {

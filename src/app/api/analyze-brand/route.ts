@@ -6,7 +6,7 @@ import { InfluencerProfile } from "@/types";
 
 export async function POST(req: NextRequest) {
   try {
-    const { handle } = await req.json();
+    const { handle, sell, customer } = await req.json();
     if (!handle) {
       return NextResponse.json({ error: "Instagram handle is required" }, { status: 400 });
     }
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Analyze the brand
-    const brandAnalysis = await analyzeBrand(normalizedHandle);
+    const brandAnalysis = await analyzeBrand(normalizedHandle, sell, customer);
 
     // Update brand with inferred info
     await prisma.brand.update({
